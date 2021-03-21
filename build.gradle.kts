@@ -11,9 +11,16 @@ plugins {
     application
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(16))
+    }
+
+}
+
 repositories {
     // Use JCenter for resolving dependencies.
-    jcenter()
+    mavenCentral()
     maven(url = "https://jitpack.io")
 }
 
