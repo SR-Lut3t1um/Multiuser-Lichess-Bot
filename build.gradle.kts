@@ -14,6 +14,7 @@ plugins {
 repositories {
     // Use JCenter for resolving dependencies.
     jcenter()
+    maven(url = "https://jitpack.io")
 }
 
 dependencies {
