@@ -25,6 +25,9 @@ dependencies {
 
     // This dependency is used by the application.
     implementation("com.google.guava:guava:29.0-jre")
+
+    // This dependency is used to check if a chess move is legal
+    implementation("com.github.bhlangonijr:chesslib:1.2.5")
 }
 
 application {
