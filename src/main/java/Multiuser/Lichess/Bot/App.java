@@ -3,12 +3,15 @@
  */
 package Multiuser.Lichess.Bot;
 
+import Multiuser.Lichess.Bot.Game.Game;
+
 public class App {
     public String getGreeting() {
         return "Hello World!";
     }
 
     public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
+        Game game = new Game();
+        game.startGame(true);
     }
 }
