@@ -32,7 +32,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 
     // This dependency is used by the application.
-    implementation("com.google.guava:guava:29.0-jre")
+    implementation("com.google.guava:guava:30.1.1-jre")
 
     // This dependency is used to work with json.
     implementation("com.fasterxml.jackson.core:jackson-databind:2.12.2")
