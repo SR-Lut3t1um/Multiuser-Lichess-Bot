@@ -44,7 +44,7 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass.set("Multiuser.Lichess.Bot.App")
+    mainClass.set("multiuser.lichess.bot.App")
 }
 
 tasks.test {
