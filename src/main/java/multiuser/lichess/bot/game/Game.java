@@ -1,14 +1,15 @@
-package Multiuser.Lichess.Bot.Game;
+package multiuser.lichess.bot.game;
 
 import com.github.bhlangonijr.chesslib.Board;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class Game {
+
+	static Supplier<IllegalArgumentException> illegalMove = () -> new IllegalArgumentException("move is not legal!");
+	static Supplier<IllegalArgumentException> noLegalMove = () -> new IllegalArgumentException("no legal move was received!");
 
 	/**
 	 * The GameID that lichess has assigned to this game
@@ -45,7 +46,7 @@ public class Game {
 	private Map<String, List<String>> filterInvalidMoves(Move[] moves) {
 		return Arrays.stream(moves).filter(move ->
 			board.legalMoves().stream().anyMatch(legalMove ->
-				legalMove.getSan().equals(move.move()))
+				legalMove.toString().equals(move.move()))
 		).collect(Collectors.groupingBy(Move::move, Collectors.mapping(Move::playerName, Collectors.toList())));
 	}
 
@@ -59,8 +60,13 @@ public class Game {
 	}
 
 	public void move(String move) {
-		board.doMove(board.legalMoves().stream().filter(m -> m.getSan().equals(move)).findAny().orElseThrow(
-				() -> new IllegalArgumentException("move is not a legal move!")
-		));
+		board.doMove(board.legalMoves().stream().filter(m -> m.toString().equals(move)).findAny().orElseThrow(illegalMove));
+		System.out.println(board.getFen());
+	}
+
+	public void move(Move[] moves) {
+		var move = filterInvalidMoves(moves).entrySet().stream()
+				.max(Comparator.comparing((entry) -> entry.getValue().size())).orElseThrow(noLegalMove);
+		move(move.getKey());
 	}
 }

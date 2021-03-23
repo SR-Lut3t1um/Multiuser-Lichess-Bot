@@ -34,7 +34,10 @@ dependencies {
     // This dependency is used by the application.
     implementation("com.google.guava:guava:29.0-jre")
 
-    // This dependency is used to check if a chess move is legal
+    // This dependency is used to work with json.
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.12.2")
+
+    // This dependency is used to check if a chess move is legal.
     implementation("com.github.bhlangonijr:chesslib:1.2.5")
 }
 
