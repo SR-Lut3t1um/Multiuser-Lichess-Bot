@@ -1,4 +1,4 @@
-package Multiuser.Lichess.Bot.Game;
+package multiuser.lichess.bot.game;
 
 public record Move(String playerName, String move) {
 }
