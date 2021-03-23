@@ -9,7 +9,7 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     application
-    id("org.sonarqube").version("3.0")
+    id("org.sonarqube").version("3.1.1")
 }
 
 java {
