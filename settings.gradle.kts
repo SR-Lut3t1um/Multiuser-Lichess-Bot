@@ -8,4 +8,3 @@
  */
 
 rootProject.name = "Multiuser-Lichess-Bot"
-include("app")
