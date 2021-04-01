@@ -9,7 +9,6 @@ public class GameTest {
 
 	@Test
 	public void GameLegalMoveFilter() {
-		game.startGame(true);
 		Move[] moves = new Move[1];
 		moves[0] = new Move("user1", "e2e4");
 		game.move(moves);
