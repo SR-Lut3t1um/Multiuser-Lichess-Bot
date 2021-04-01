@@ -47,7 +47,7 @@ class LichessHttp {
 			}
 
 			synchronized (event) {
-				event.notify();
+				event.notifyAll();
 			}
 		}
 
@@ -100,8 +100,6 @@ class LichessHttp {
 			json = jsonParser.readValueAsTree();
 			return json;
 		} catch (JsonParseException ignore) {
-			var jsonParser = jsonFactory.createParser(body);
-			System.out.println(jsonParser.readValueAsTree());
 			return null;
 		}
 	}
