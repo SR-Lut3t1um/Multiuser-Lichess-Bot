@@ -29,27 +29,25 @@ public class LichessGameManager {
 		public void onNext(String lines) {
 			this.subscription.request(1);
 			if (lines.isBlank()) return;
-			try {
-				var jsonTree = jsonFactory.createParser(lines).readValueAsTree();
+			try (var parser = jsonFactory.createParser(lines)) {
+				var jsonTree = parser.readValueAsTree();
 				if (jsonTree == null) return;
-				synchronized (System.out) {
-					System.out.println(jsonTree.get("type").toString());
-				}
-				switch (jsonTree.get("type").toString()) {
-					case "\"gameStart\"" -> {
-						games.put(jsonTree.get("game").get("id").toString(), new Thread(
-								() -> {
-									LichessBot lichessBot = new LichessBot();
-									var gameId = jsonTree.get("game").get("id").toString();
-									gameId = gameId.substring(1, gameId.length() - 1);
-									lichessBot.playGame(gameId, true);
-								}
-						));
-						games.get(jsonTree.get("game").get("id").toString()).start();
-						games.get(jsonTree.get("game").get("id").toString()).join();
+				if ("\"gameStart\"".equals(jsonTree.get("type").toString())) {
+					games.put(jsonTree.get("game").get("id").toString(), new Thread(
+							() -> {
+								LichessBot lichessBot = new LichessBot();
+								var gameId = jsonTree.get("game").get("id").toString();
+								gameId = gameId.substring(1, gameId.length() - 1);
+								lichessBot.playGame(gameId, true);
+							}
+					));
+					games.get(jsonTree.get("game").get("id").toString()).start();
+				} else {
+					synchronized (System.out) {
+						System.out.println("Unhandled Event" + jsonTree.get("type").toString() + "received.");
 					}
 				}
-			} catch (IOException | InterruptedException e) {
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
 
@@ -67,16 +65,14 @@ public class LichessGameManager {
 		}
 	}
 
-	public void setup() {
+	public void setup() throws InterruptedException {
 		synchronized (System.out) {
 			System.out.println("Setting up Lichess Event listener");
 		}
 		try {
 			lichessHttp.createEventListener(new StringFinder()).get();
-		} catch (CompletionException | InterruptedException | ExecutionException e) {
-			synchronized (System.out) {
-				e.printStackTrace();
-			}
+		} catch (CompletionException | ExecutionException ignore) {
+			// TODO: proper error handling
 		}
 	}
 
