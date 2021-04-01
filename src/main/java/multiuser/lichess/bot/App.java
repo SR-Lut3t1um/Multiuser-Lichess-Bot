@@ -27,6 +27,9 @@ public class App {
 	  var lichessGameManagerThread = new Thread( () -> {
 	  	try {
 	  		lichessGameManager.setup();
+		  } catch (InterruptedException e) {
+			  System.out.println("Interrupted Thread: " + Thread.currentThread().getId());
+			  Thread.currentThread().interrupt();
 		  } catch (Exception e) {
 	  		throw new RuntimeException(e);
 		  }}

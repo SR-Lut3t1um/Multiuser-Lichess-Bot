@@ -2,6 +2,7 @@ package multiuser.lichess.bot.lichess_bot;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -99,27 +100,30 @@ class LichessHttp {
 			json = jsonParser.readValueAsTree();
 			return json;
 		} catch (JsonParseException ignore) {
+			var jsonParser = jsonFactory.createParser(body);
+			System.out.println(jsonParser.readValueAsTree());
 			return null;
 		}
-
 	}
 
 	TreeNode createPost(String path) throws IOException, InterruptedException {
 		return createPost(path, HttpRequest.BodyPublishers.ofString("{}"));
 	}
 
-	String waitForMove(String path, short receivedMoves) {
+	String waitForMove(String path, short receivedMoves) throws IOException {
 		StringFinder finder = new StringFinder();
 		HttpRequest request = getRequestBuilder(path).GET().build();
 
 		synchronized (finder.event) {
 			client.sendAsync(request, HttpResponse.BodyHandlers.fromLineSubscriber(finder));
 
-			try (var jsonParser = jsonFactory.createParser(finder.event.string)) {
+			JsonParser jsonParser = null;
+			try {
 				TreeNode jsonTree;
 				String[] moves;
 				do {
 					finder.event.wait();
+					jsonParser = jsonFactory.createParser(finder.event.string);
 					jsonTree = jsonParser.readValueAsTree();
 					moves = jsonTree.get("state").get("moves").toString().replace("\"", "").split(" ");
 				} while (moves.length <= receivedMoves);
@@ -128,6 +132,10 @@ class LichessHttp {
 
 			} catch (InterruptedException | IOException e) {
 				e.printStackTrace();
+			} finally {
+				if (jsonParser != null) {
+					jsonParser.close();
+				}
 			}
 		}
 		return null;

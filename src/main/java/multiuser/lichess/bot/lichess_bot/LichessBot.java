@@ -30,7 +30,7 @@ public class LichessBot {
 		}
 	}
 
-	public void playGame(String gameId, boolean isWhite) {
+	public void playGame(String gameId, boolean isWhite) throws IOException {
 		this.gameId = gameId;
 		if (isWhite)
 			status = Status.WAITING_FOR_LICHESS;
@@ -49,7 +49,7 @@ public class LichessBot {
 		} while (status.equals(Status.WAITING_FOR_BOT) || status.equals(Status.WAITING_FOR_LICHESS));
 	}
 
-	private String waitForLichessMove() {
+	private String waitForLichessMove() throws IOException {
 		var move = lichessHttp.waitForMove("bot/game/stream/" + gameId, receivedMoves);
 		status = Status.WAITING_FOR_BOT;
 		receivedMoves++;

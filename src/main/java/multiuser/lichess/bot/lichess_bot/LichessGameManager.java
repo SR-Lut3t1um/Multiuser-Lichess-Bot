@@ -3,6 +3,7 @@ package multiuser.lichess.bot.lichess_bot;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import javax.swing.plaf.TableHeaderUI;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletionException;
@@ -38,7 +39,11 @@ public class LichessGameManager {
 								LichessBot lichessBot = new LichessBot();
 								var gameId = jsonTree.get("game").get("id").toString();
 								gameId = gameId.substring(1, gameId.length() - 1);
-								lichessBot.playGame(gameId, true);
+								try {
+									lichessBot.playGame(gameId, true);
+								} catch (IOException ignore) {
+									Thread.currentThread().interrupt();
+								}
 							}
 					));
 					games.get(jsonTree.get("game").get("id").toString()).start();
