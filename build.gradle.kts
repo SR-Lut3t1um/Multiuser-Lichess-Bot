@@ -12,6 +12,14 @@ plugins {
     id("org.sonarqube").version("3.1.1")
 }
 
+sonarqube {
+    properties {
+        property("sonar.projectKey", "SR-Lut3t1um_Multiuser-Lichess-Bot")
+        property("sonar.organization", "sr-lut3t1um")
+        property("sonar.host.url", "https://sonarcloud.io")
+    }
+}
+
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(16))
