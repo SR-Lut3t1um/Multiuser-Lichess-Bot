@@ -33,11 +33,6 @@ public class Game {
 	Board board = new Board();
 
 	/**
-	 * if the multiuser is starting
-	 */
-	boolean isStarting = true;
-
-	/**
 	 * This method takes an array of moves and removes every entry that is not a legal move
 	 * it then creates a map of all moves as keys and a list of the player(s) that voted for it as the value.
 	 * @param moves the moves that shall be used
@@ -50,16 +45,12 @@ public class Game {
 		).collect(Collectors.groupingBy(Move::move, Collectors.mapping(Move::playerName, Collectors.toList())));
 	}
 
-	public void startGame(boolean isStarting) {
-		this.isStarting = isStarting;
-	}
-
-	public void startGame(boolean isStarting, String fen) {
+	public void loadFen(String fen) {
 		board.loadFromFen(fen);
-		startGame(isStarting);
 	}
 
 	public void move(String move) {
+		System.out.println(board.legalMoves() + move);
 		board.doMove(board.legalMoves().stream().filter(m -> m.toString().equals(move)).findAny().orElseThrow(illegalMove));
 		System.out.println(board.getFen());
 	}
