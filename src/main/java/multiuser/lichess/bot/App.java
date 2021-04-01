@@ -4,17 +4,38 @@
 package multiuser.lichess.bot;
 
 import multiuser.lichess.bot.lichess_bot.LichessBot;
+import multiuser.lichess.bot.lichess_bot.LichessGameManager;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 public class App {
 
 	/**
 	 * The delay that shall be waited after retrying an api request.
 	 */
-  public static void main(String[] args) throws IOException, InterruptedException {
-    LichessBot lichessBot = new LichessBot();
-    lichessBot.createGame("SR_Lut3t1um");
-    System.out.println(lichessBot.getStatus());
+  public static void main(String[] args) throws InterruptedException {
+	  System.out.println("begin Startup");
+
+	  LichessGameManager lichessGameManager = new LichessGameManager();
+	  LichessBot lichessBot = new LichessBot();
+
+	  List<Thread> threadList = new LinkedList<>();
+
+	  threadList.add(new Thread(
+			  lichessGameManager::setup
+	  ));
+
+	  threadList.forEach(Thread::start);
+	  threadList.forEach(thread -> {
+	  	try {
+	  		thread.join();
+		  } catch (InterruptedException e) {
+	  		e.printStackTrace();
+		  }
+	  });
   }
 }

@@ -16,13 +16,17 @@ class LichessHttp {
 
 	private static class StringFinder implements Flow.Subscriber<String> {
 
-		private final String term;
-		private Flow.Subscription subscription;
-		private final CompletableFuture<Boolean> found = new CompletableFuture<>();
+		private static class StringContainer {
+			public String string = "";
 
-		private StringFinder(String term) {
-			this.term = term;
+			@Override
+			public String toString() {
+				return string;
+			}
 		}
+
+		private Flow.Subscription subscription;
+		final StringContainer event = new StringContainer();
 
 		@Override
 		public void onSubscribe(Flow.Subscription subscription) {
@@ -32,23 +36,29 @@ class LichessHttp {
 
 		@Override
 		public void onNext(String line) {
-			System.out.println(line);
 			subscription.request(1);
+			event.string = line;
+
+			if (line.isBlank()) {
+				subscription.request(1);
+				return;
+			}
+
+			synchronized (event) {
+				event.notify();
+			}
 		}
+
 
 		@Override
 		public void onError(Throwable ex) {
-			// TODO: expose the error
+			ex.printStackTrace();
 		}
 
 		@Override
 		public void onComplete() {
 			// entire body was processed, but term was not found;
 			// TODO: expose negative result
-		}
-
-		public CompletableFuture<Boolean> found() {
-			return found;
 		}
 	}
 
@@ -57,6 +67,8 @@ class LichessHttp {
 	static final URI LICHESS_API_URL = URI.create("https://lichess.org/api/");
 
 	static final String LICHESS_API_TOKEN = "CRTHHCQYACU245j6";
+
+	static long lastRequest;
 
 	JsonFactory jsonFactory = new JsonFactory().setCodec(new ObjectMapper());
 	HttpClient client = HttpClient.newBuilder()
@@ -70,21 +82,61 @@ class LichessHttp {
 				.header("Authorization", "Bearer " + LICHESS_API_TOKEN);
 	}
 
-	TreeNode createPost(String path) throws IOException, InterruptedException {
-		return jsonFactory.createParser(client.send(getRequestBuilder(path).POST(HttpRequest.BodyPublishers.noBody())
-				.build(), HttpResponse.BodyHandlers.ofString()).body()).readValueAsTree();
+	TreeNode createPost(String path, HttpRequest.BodyPublisher bodyPublisher) throws IOException, InterruptedException {
+		String body = null;
+		do {
+			if (lastRequest - ( System.currentTimeMillis() + API_DELAY) > 0 )
+				Thread.sleep(lastRequest - ( System.currentTimeMillis() + API_DELAY ) );
+			if (body != null) Thread.sleep(API_DELAY);
+			body = client.send(getRequestBuilder(path).POST(bodyPublisher).header("Content-Type", "application/json")
+					.build(), HttpResponse.BodyHandlers.ofString()).body();
+			lastRequest = System.currentTimeMillis();
+			System.out.println(body);
+		} while (body.equals("Too many requests. Please retry in a moment."));
+
+		return jsonFactory.createParser(body).readValueAsTree();
 	}
 
-	TreeNode createGet(String path) {
-		StringFinder finder = new StringFinder("\n");
-		HttpRequest request = HttpRequest.newBuilder(LICHESS_API_URL.resolve(path)).GET().build();
-		client.sendAsync(request, HttpResponse.BodyHandlers.fromLineSubscriber(finder));
-		finder
-				.found()
-				.exceptionally(__ -> false)
-				.thenAccept(found -> System.out.println(
-						"Completed " + LICHESS_API_URL.resolve(path) + " / found: " + found));
-		// todo use body subsriber
+	TreeNode createPost(String path) throws IOException, InterruptedException {
+		return createPost(path, HttpRequest.BodyPublishers.ofString("{}"));
+	}
+
+	String waitForMove(String path, short receivedMoves) {
+		StringFinder finder = new StringFinder();
+		HttpRequest request = getRequestBuilder(path).GET().build();
+
+		synchronized (finder.event) {
+			client.sendAsync(request, HttpResponse.BodyHandlers.fromLineSubscriber(finder));
+
+			try {
+				TreeNode jsonTree;
+				String[] moves;
+				do {
+					finder.event.wait();
+					jsonTree = jsonFactory.createParser(finder.event.string).readValueAsTree();
+					moves = jsonTree.get("state").get("moves").toString().replace("\"", "").split(" ");
+				} while (moves.length <= receivedMoves);
+
+				return moves[receivedMoves];
+
+			} catch (InterruptedException | IOException e) {
+				e.printStackTrace();
+			}
+		}
 		return null;
+	}
+
+	TreeNode makeMove(String gameId, String move) {
+		try {
+			return createPost("bot/game/" + gameId + "/move/" + move);
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	CompletableFuture<HttpResponse<Void>> createEventListener(Flow.Subscriber<? super String> subscriber) {
+		HttpRequest request = getRequestBuilder("stream/event").GET().build();
+		return client.sendAsync(request, HttpResponse.BodyHandlers.fromLineSubscriber(subscriber));
 	}
 }
