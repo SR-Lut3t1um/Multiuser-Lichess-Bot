@@ -115,25 +115,21 @@ class LichessHttp {
 		synchronized (finder.event) {
 			client.sendAsync(request, HttpResponse.BodyHandlers.fromLineSubscriber(finder));
 
-			JsonParser jsonParser = null;
 			try {
 				TreeNode jsonTree;
 				String[] moves;
 				do {
 					finder.event.wait();
-					jsonParser = jsonFactory.createParser(finder.event.string);
-					jsonTree = jsonParser.readValueAsTree();
-					moves = jsonTree.get("state").get("moves").toString().replace("\"", "").split(" ");
+					try (var jsonParser = jsonFactory.createParser(finder.event.string)) {
+						jsonTree = jsonParser.readValueAsTree();
+						moves = jsonTree.get("state").get("moves").toString().replace("\"", "").split(" ");
+					}
 				} while (moves.length <= receivedMoves);
 
 				return moves[receivedMoves];
 
 			} catch (InterruptedException | IOException e) {
 				e.printStackTrace();
-			} finally {
-				if (jsonParser != null) {
-					jsonParser.close();
-				}
 			}
 		}
 		return null;
