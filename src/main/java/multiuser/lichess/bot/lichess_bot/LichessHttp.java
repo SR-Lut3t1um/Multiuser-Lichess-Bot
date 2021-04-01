@@ -1,6 +1,7 @@
 package multiuser.lichess.bot.lichess_bot;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -93,10 +94,14 @@ class LichessHttp {
 			lastRequest = System.currentTimeMillis();
 			System.out.println(body);
 		} while (body.equals("Too many requests. Please retry in a moment."));
-		var jsonParser = jsonFactory.createParser(body);
-		var json = jsonParser.readValueAsTree();
-		jsonParser.close();
-		return json;
+		TreeNode json;
+		try (var jsonParser = jsonFactory.createParser(body)) {
+			json = jsonParser.readValueAsTree();
+			return json;
+		} catch (JsonParseException ignore) {
+			return null;
+		}
+
 	}
 
 	TreeNode createPost(String path) throws IOException, InterruptedException {
