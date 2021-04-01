@@ -1,11 +1,9 @@
 package multiuser.lichess.bot.lichess_bot;
 
 import multiuser.lichess.bot.game.Game;
-import multiuser.lichess.bot.game.Move;
 
 import java.io.IOException;
 import java.net.http.HttpRequest;
-import java.util.Arrays;
 
 
 public class LichessBot {

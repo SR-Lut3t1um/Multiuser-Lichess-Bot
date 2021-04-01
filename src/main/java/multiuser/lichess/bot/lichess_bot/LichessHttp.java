@@ -93,8 +93,10 @@ class LichessHttp {
 			lastRequest = System.currentTimeMillis();
 			System.out.println(body);
 		} while (body.equals("Too many requests. Please retry in a moment."));
-
-		return jsonFactory.createParser(body).readValueAsTree();
+		var jsonParser = jsonFactory.createParser(body);
+		var json = jsonParser.readValueAsTree();
+		jsonParser.close();
+		return json;
 	}
 
 	TreeNode createPost(String path) throws IOException, InterruptedException {
@@ -108,12 +110,12 @@ class LichessHttp {
 		synchronized (finder.event) {
 			client.sendAsync(request, HttpResponse.BodyHandlers.fromLineSubscriber(finder));
 
-			try {
+			try (var jsonParser = jsonFactory.createParser(finder.event.string)) {
 				TreeNode jsonTree;
 				String[] moves;
 				do {
 					finder.event.wait();
-					jsonTree = jsonFactory.createParser(finder.event.string).readValueAsTree();
+					jsonTree = jsonParser.readValueAsTree();
 					moves = jsonTree.get("state").get("moves").toString().replace("\"", "").split(" ");
 				} while (moves.length <= receivedMoves);
 

@@ -6,13 +6,14 @@ package multiuser.lichess.bot;
 import multiuser.lichess.bot.lichess_bot.LichessBot;
 import multiuser.lichess.bot.lichess_bot.LichessGameManager;
 
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-
 public class App {
+
+	static Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
+		@Override
+		public void uncaughtException(Thread th, Throwable ex) {
+			System.out.println("Thread with id:" + th.getId() + " crashed due to Uncaught exception: " + ex);
+		}
+	};
 
 	/**
 	 * The delay that shall be waited after retrying an api request.
@@ -23,19 +24,16 @@ public class App {
 	  LichessGameManager lichessGameManager = new LichessGameManager();
 	  LichessBot lichessBot = new LichessBot();
 
-	  List<Thread> threadList = new LinkedList<>();
-
-	  threadList.add(new Thread(
-			  lichessGameManager::setup
-	  ));
-
-	  threadList.forEach(Thread::start);
-	  threadList.forEach(thread -> {
+	  var lichessGameManagerThread = new Thread( () -> {
 	  	try {
-	  		thread.join();
-		  } catch (InterruptedException e) {
-	  		e.printStackTrace();
-		  }
-	  });
+	  		lichessGameManager.setup();
+		  } catch (Exception e) {
+	  		throw new RuntimeException(e);
+		  }}
+	  );
+
+	  lichessGameManagerThread.setUncaughtExceptionHandler(h);
+	  lichessGameManagerThread.start();
+	  lichessGameManagerThread.join();
   }
 }
