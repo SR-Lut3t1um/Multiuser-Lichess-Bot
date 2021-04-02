@@ -2,7 +2,6 @@ package multiuser.lichess.bot.lichess_bot;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -13,6 +12,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Flow;
+
+import static java.net.http.HttpRequest.BodyPublishers.noBody;
 
 class LichessHttp {
 
@@ -66,7 +67,7 @@ class LichessHttp {
 
 	static final int API_DELAY = 20000;
 
-	static final URI LICHESS_API_URL = URI.create("https://lichess.org/api/");
+	static final URI LICHESS_URL = URI.create("https://lichess.org/");
 
 	static final String LICHESS_API_TOKEN = "CRTHHCQYACU245j6";
 
@@ -79,33 +80,49 @@ class LichessHttp {
 			.build();
 
 	HttpRequest.Builder getRequestBuilder(String path) {
-		System.out.println(LICHESS_API_URL.resolve(path));
-		return HttpRequest.newBuilder(LICHESS_API_URL.resolve(path))
+		return HttpRequest.newBuilder(LICHESS_URL.resolve(path))
 				.header("Authorization", "Bearer " + LICHESS_API_TOKEN);
 	}
 
-	TreeNode createPost(String path, HttpRequest.BodyPublisher bodyPublisher) throws IOException, InterruptedException {
+	TreeNode createRequest(String path, String method, HttpRequest.BodyPublisher bodyPublisher) throws IOException, InterruptedException {
 		String body = null;
 		do {
 			if (lastRequest - ( System.currentTimeMillis() + API_DELAY) > 0 )
 				Thread.sleep(lastRequest - ( System.currentTimeMillis() + API_DELAY ) );
 			if (body != null) Thread.sleep(API_DELAY);
-			body = client.send(getRequestBuilder(path).POST(bodyPublisher).header("Content-Type", "application/json")
-					.build(), HttpResponse.BodyHandlers.ofString()).body();
+
+			body = client.send(
+					getRequestBuilder(path)
+							.method(method, bodyPublisher)
+							.header("Content-Type", "application/json")
+							.header("Accept", "application/json")
+							.build(),
+					HttpResponse.BodyHandlers.ofString()
+			).body();
+
 			lastRequest = System.currentTimeMillis();
-			System.out.println(body);
 		} while (body.equals("Too many requests. Please retry in a moment."));
 		TreeNode json;
 		try (var jsonParser = jsonFactory.createParser(body)) {
 			json = jsonParser.readValueAsTree();
 			return json;
 		} catch (JsonParseException ignore) {
+			System.err.println(LICHESS_URL.resolve(path));
+			System.out.println(body);
 			return null;
 		}
 	}
 
+	TreeNode createPost(String path, HttpRequest.BodyPublisher bodyPublisher) throws IOException, InterruptedException {
+		return createRequest(path, "POST", bodyPublisher);
+	}
+
 	TreeNode createPost(String path) throws IOException, InterruptedException {
 		return createPost(path, HttpRequest.BodyPublishers.ofString("{}"));
+	}
+
+	TreeNode createGet(String path) throws IOException, InterruptedException {
+		return createRequest(path, "GET", noBody());
 	}
 
 	String waitForMove(String path, short receivedMoves) throws IOException {
@@ -114,20 +131,16 @@ class LichessHttp {
 
 		synchronized (finder.event) {
 			client.sendAsync(request, HttpResponse.BodyHandlers.fromLineSubscriber(finder));
-
 			try {
-				TreeNode jsonTree;
 				String[] moves;
 				do {
 					finder.event.wait();
 					try (var jsonParser = jsonFactory.createParser(finder.event.string)) {
-						jsonTree = jsonParser.readValueAsTree();
+						TreeNode jsonTree = jsonParser.readValueAsTree();
 						moves = jsonTree.get("state").get("moves").toString().replace("\"", "").split(" ");
 					}
 				} while (moves.length <= receivedMoves);
-
 				return moves[receivedMoves];
-
 			} catch (InterruptedException | IOException e) {
 				e.printStackTrace();
 			}
@@ -144,8 +157,13 @@ class LichessHttp {
 		return null;
 	}
 
+	String[] getPlayedMoves(String gameID) throws IOException, InterruptedException {
+		var tree = createGet("game/export/" + gameID);
+		return tree.get("moves").toString().replace("\"", "").split(" ");
+	}
+
 	CompletableFuture<HttpResponse<Void>> createEventListener(Flow.Subscriber<? super String> subscriber) {
-		HttpRequest request = getRequestBuilder("stream/event").GET().build();
+		HttpRequest request = getRequestBuilder("api/stream/event").GET().build();
 		return client.sendAsync(request, HttpResponse.BodyHandlers.fromLineSubscriber(subscriber));
 	}
 }

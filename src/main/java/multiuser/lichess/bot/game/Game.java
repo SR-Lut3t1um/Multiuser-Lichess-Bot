@@ -50,9 +50,7 @@ public class Game {
 	}
 
 	public void move(String move) {
-		System.out.println(board.legalMoves() + move);
 		board.doMove(board.legalMoves().stream().filter(m -> m.toString().equals(move)).findAny().orElseThrow(illegalMove));
-		System.out.println(board.getFen());
 	}
 
 	public void move(Move[] moves) {
