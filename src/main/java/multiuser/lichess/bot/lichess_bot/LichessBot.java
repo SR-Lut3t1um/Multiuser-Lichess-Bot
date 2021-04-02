@@ -4,6 +4,7 @@ import multiuser.lichess.bot.game.Game;
 
 import java.io.IOException;
 import java.net.http.HttpRequest;
+import java.util.Arrays;
 
 
 public class LichessBot {
@@ -13,6 +14,7 @@ public class LichessBot {
 	private Status status = Status.WAITING_FOR_CREATION;
 	private final Game game = new Game();
 	private short receivedMoves = (short) 0;
+	private boolean isBotToMove;
 
 	public void createGame(String user) throws IOException, InterruptedException {
 		synchronized (System.out) {
@@ -30,12 +32,28 @@ public class LichessBot {
 		}
 	}
 
-	public void playGame(String gameId, boolean isWhite) throws IOException {
+	private void setUpGame() throws IOException, InterruptedException {
+		var moves = lichessHttp.getPlayedMoves(gameId);
+		System.out.println(game);
+		System.out.println(Arrays.toString(moves));
+		for (String move: moves) {
+			try {
+				game.move(move);
+			} catch (IllegalArgumentException ignore) {
+				Thread.currentThread().interrupt();
+			}
+		}
+		isBotToMove = ! isBotToMove;
+	}
+
+	public void playGame(String gameId, boolean isWhite) throws IOException, InterruptedException {
+		isBotToMove = isWhite;
 		this.gameId = gameId;
-		if (isWhite)
-			status = Status.WAITING_FOR_LICHESS;
-		else
+		setUpGame();
+		if (isBotToMove)
 			status = Status.WAITING_FOR_BOT;
+		else
+			status = Status.WAITING_FOR_LICHESS;
 		String move;
 		do {
 			switch (status) {
@@ -50,14 +68,14 @@ public class LichessBot {
 	}
 
 	private String waitForLichessMove() throws IOException {
-		var move = lichessHttp.waitForMove("bot/game/stream/" + gameId, receivedMoves);
+		var move = lichessHttp.waitForMove("api/bot/game/stream/" + gameId, receivedMoves);
 		status = Status.WAITING_FOR_BOT;
 		receivedMoves++;
 		return move;
 	}
 
 	private String waitForPlayerMove() {
-		var move = "e7e5";
+		var move = "b8c6";
 		status = Status.WAITING_FOR_LICHESS;
 		receivedMoves++;
 		System.out.println(lichessHttp.makeMove(gameId, move));

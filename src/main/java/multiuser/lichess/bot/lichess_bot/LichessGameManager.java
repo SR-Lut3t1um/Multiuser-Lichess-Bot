@@ -3,7 +3,6 @@ package multiuser.lichess.bot.lichess_bot;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.swing.plaf.TableHeaderUI;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletionException;
@@ -41,7 +40,7 @@ public class LichessGameManager {
 								gameId = gameId.substring(1, gameId.length() - 1);
 								try {
 									lichessBot.playGame(gameId, true);
-								} catch (IOException ignore) {
+								} catch (IOException | InterruptedException ignore) {
 									Thread.currentThread().interrupt();
 								}
 							}
@@ -49,13 +48,12 @@ public class LichessGameManager {
 					games.get(jsonTree.get("game").get("id").toString()).start();
 				} else {
 					synchronized (System.out) {
-						System.out.println("Unhandled Event" + jsonTree.get("type").toString() + "received.");
+						System.out.println("Unhandled Event: " + jsonTree.get("type").toString() + " received.");
 					}
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-
 		}
 
 		@Override
