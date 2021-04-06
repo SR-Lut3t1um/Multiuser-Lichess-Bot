@@ -1,6 +1,8 @@
 package multiuser.lichess.bot.game;
 
 import com.github.bhlangonijr.chesslib.Board;
+import com.github.bhlangonijr.chesslib.move.MoveGenerator;
+import com.github.bhlangonijr.chesslib.move.MoveList;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -49,7 +51,19 @@ public class Game {
 		board.loadFromFen(fen);
 	}
 
+	public void loadMoves(String[] moves) {
+		MoveList moveList = new MoveList();
+		moveList.loadFromSan(String.join(" ", moves));
+		board.loadFromFen(moveList.getFen());
+	}
+
 	public void move(String move) {
+		Map<String, com.github.bhlangonijr.chesslib.move.Move> sanMoves = new HashMap<>();
+		Map<String, com.github.bhlangonijr.chesslib.move.Move> lanMoves = new HashMap<>();
+		for (com.github.bhlangonijr.chesslib.move.Move legalMove: MoveGenerator.generateLegalMoves(board)) {
+			sanMoves.put(legalMove.getSan(), legalMove);
+			lanMoves.put(legalMove.toString(), legalMove);
+		}
 		board.doMove(board.legalMoves().stream().filter(m -> m.toString().equals(move)).findAny().orElseThrow(illegalMove));
 	}
 
