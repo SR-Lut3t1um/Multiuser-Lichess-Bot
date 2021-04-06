@@ -43,7 +43,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.12.2")
 
     // This dependency is used to check if a chess move is legal.
-    implementation("com.github.bhlangonijr:chesslib:1.2.5")
+    implementation("com.github.bhlangonijr:chesslib:1.3.0")
 }
 
 application {

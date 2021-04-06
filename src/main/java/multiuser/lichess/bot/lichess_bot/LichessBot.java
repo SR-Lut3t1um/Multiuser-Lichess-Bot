@@ -1,5 +1,6 @@
 package multiuser.lichess.bot.lichess_bot;
 
+import com.github.bhlangonijr.chesslib.move.MoveList;
 import multiuser.lichess.bot.game.Game;
 
 import java.io.IOException;
@@ -34,20 +35,15 @@ public class LichessBot {
 
 	private void setUpGame() throws IOException, InterruptedException {
 		var moves = lichessHttp.getPlayedMoves(gameId);
-		System.out.println(game);
-		System.out.println(Arrays.toString(moves));
-		for (String move: moves) {
-			try {
-				game.move(move);
-			} catch (IllegalArgumentException ignore) {
-				Thread.currentThread().interrupt();
-			}
+		game.loadMoves(moves);
+		if (moves.length % 2 != 0) {
+			isBotToMove = ! isBotToMove;
 		}
-		isBotToMove = ! isBotToMove;
+		receivedMoves += moves.length;
 	}
 
 	public void playGame(String gameId, boolean isWhite) throws IOException, InterruptedException {
-		isBotToMove = isWhite;
+		isBotToMove = ! isWhite;
 		this.gameId = gameId;
 		setUpGame();
 		if (isBotToMove)
@@ -67,18 +63,17 @@ public class LichessBot {
 		} while (status.equals(Status.WAITING_FOR_BOT) || status.equals(Status.WAITING_FOR_LICHESS));
 	}
 
-	private String waitForLichessMove() throws IOException {
-		var move = lichessHttp.waitForMove("api/bot/game/stream/" + gameId, receivedMoves);
+	private String waitForLichessMove() throws InterruptedException {
+		var move = lichessHttp.waitForMove(gameId, receivedMoves);
 		status = Status.WAITING_FOR_BOT;
 		receivedMoves++;
 		return move;
 	}
 
 	private String waitForPlayerMove() {
-		var move = "b8c6";
+		var move = "h4f4";
 		status = Status.WAITING_FOR_LICHESS;
 		receivedMoves++;
-		System.out.println(lichessHttp.makeMove(gameId, move));
 		return move;
 	}
 

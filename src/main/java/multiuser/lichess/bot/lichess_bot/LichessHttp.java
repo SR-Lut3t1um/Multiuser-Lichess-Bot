@@ -10,6 +10,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Flow;
 
@@ -43,7 +47,7 @@ class LichessHttp {
 			event.string = line;
 
 			if (line.isBlank()) {
-				subscription.request(1);
+				// subscription.request(1);
 				return;
 			}
 
@@ -93,6 +97,7 @@ class LichessHttp {
 
 			body = client.send(
 					getRequestBuilder(path)
+							.timeout(Duration.ofSeconds(1))
 							.method(method, bodyPublisher)
 							.header("Content-Type", "application/json")
 							.header("Accept", "application/json")
@@ -125,22 +130,30 @@ class LichessHttp {
 		return createRequest(path, "GET", noBody());
 	}
 
-	String waitForMove(String path, short receivedMoves) throws IOException {
+	String[] waitForMoves(String gameId, short receivedMoves) throws InterruptedException {
 		StringFinder finder = new StringFinder();
-		HttpRequest request = getRequestBuilder(path).GET().build();
+		HttpRequest request = getRequestBuilder("api/bot/game/stream/" + gameId).GET().build();
+
+		if (lastRequest - ( System.currentTimeMillis() + API_DELAY) > 0 )
+			Thread.sleep(lastRequest - ( System.currentTimeMillis() + API_DELAY ) );
 
 		synchronized (finder.event) {
 			client.sendAsync(request, HttpResponse.BodyHandlers.fromLineSubscriber(finder));
+			lastRequest = System.currentTimeMillis();
 			try {
-				String[] moves;
+				String[] moves = new String[0];
 				do {
 					finder.event.wait();
 					try (var jsonParser = jsonFactory.createParser(finder.event.string)) {
 						TreeNode jsonTree = jsonParser.readValueAsTree();
-						moves = jsonTree.get("state").get("moves").toString().replace("\"", "").split(" ");
+						jsonTree = jsonTree.get("state");
+						if (jsonTree == null) continue;
+						jsonTree = jsonTree.get("moves");
+						if (jsonTree == null) continue;
+						moves = jsonTree.toString().replace("\"", "").split(" ");
 					}
-				} while (moves.length <= receivedMoves);
-				return moves[receivedMoves];
+				} while ( moves.length <= receivedMoves );
+				return Arrays.copyOfRange(moves, receivedMoves, moves.length);
 			} catch (InterruptedException | IOException e) {
 				e.printStackTrace();
 			}
@@ -148,18 +161,39 @@ class LichessHttp {
 		return null;
 	}
 
+	String waitForMove(String gameId, short receivedMoves) throws InterruptedException {
+		return waitForMoves(gameId, receivedMoves)[0];
+	}
+
 	TreeNode makeMove(String gameId, String move) {
 		try {
-			return createPost("bot/game/" + gameId + "/move/" + move);
+			return createPost("api/bot/game/" + gameId + "/move/" + move);
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
 
-	String[] getPlayedMoves(String gameID) throws IOException, InterruptedException {
-		var tree = createGet("game/export/" + gameID);
-		return tree.get("moves").toString().replace("\"", "").split(" ");
+	String[] getPlayedMoves(String gameId) throws IOException, InterruptedException {
+		var result = createGet("game/export/" + gameId);
+		List<String> moves = new LinkedList<>(
+				Arrays.asList(
+						result
+								.get("moves")
+								.toString()
+								.replace("\"", "")
+								.split(" ")
+				)
+		);
+
+		List<String> missingMoves = new LinkedList<>(Arrays.asList(waitForMoves(gameId, (short) moves.size())));
+		var attempts = 0;
+		while (missingMoves.size() < 3 && attempts < 3) {
+			missingMoves.addAll(Arrays.stream(waitForMoves(gameId, (short) (moves.size() + missingMoves.size()))).toList());
+			attempts++;
+		}
+		moves.addAll(missingMoves);
+		return moves.toArray(new String[0]);
 	}
 
 	CompletableFuture<HttpResponse<Void>> createEventListener(Flow.Subscriber<? super String> subscriber) {
