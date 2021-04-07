@@ -1,26 +1,23 @@
 package multiuser.lichess.bot.lichess_bot;
 
-import com.github.bhlangonijr.chesslib.move.MoveList;
 import multiuser.lichess.bot.game.Game;
+import org.tinylog.Logger;
 
 import java.io.IOException;
 import java.net.http.HttpRequest;
-import java.util.Arrays;
 
 
 public class LichessBot {
 
-	LichessHttp lichessHttp = new LichessHttp();
-	String gameId;
-	private Status status = Status.WAITING_FOR_CREATION;
 	private final Game game = new Game();
+	private final LichessHttp lichessHttp = new LichessHttp();
+	private String gameId;
+	private Status status = Status.WAITING_FOR_CREATION;
 	private short receivedMoves = (short) 0;
 	private boolean isBotToMove;
 
 	public void createGame(String user) throws IOException, InterruptedException {
-		synchronized (System.out) {
-			System.out.println("creating game ");
-		}
+		Logger.info("creating game ");
 		// be sure the bot is not already in a game
 		if (gameId == null) {
 			gameId = lichessHttp.createPost(
@@ -28,38 +25,39 @@ public class LichessBot {
 					HttpRequest.BodyPublishers.ofString("{\"color\": \"black\"}")) // body
 					.get("challenge").get("id").toString().replace("\"", "");
 			status = Status.WAITING_FOR_ACCEPT;
-		} else {
-			throw new UnsupportedOperationException("This bot is already in a game!");
-		}
+		} else throw new UnsupportedOperationException("This bot is already in a game!");
 	}
 
 	private void setUpGame() throws IOException, InterruptedException {
 		var moves = lichessHttp.getPlayedMoves(gameId);
 		game.loadMoves(moves);
-		if (moves.length % 2 != 0) {
-			isBotToMove = ! isBotToMove;
-		}
+		if (moves.length % 2 != 0) isBotToMove = !isBotToMove;
 		receivedMoves += moves.length;
 	}
 
 	public void playGame(String gameId, boolean isWhite) throws IOException, InterruptedException {
-		isBotToMove = ! isWhite;
+		isBotToMove = !isWhite;
 		this.gameId = gameId;
 		setUpGame();
-		if (isBotToMove)
-			status = Status.WAITING_FOR_BOT;
-		else
-			status = Status.WAITING_FOR_LICHESS;
+		if (isBotToMove) status = Status.WAITING_FOR_BOT;
+		else status = Status.WAITING_FOR_LICHESS;
 		String move;
 		do {
-			switch (status) {
-				case WAITING_FOR_LICHESS -> move = waitForLichessMove();
-				case WAITING_FOR_BOT -> move = waitForPlayerMove();
-				default -> {
-					return;
+			Logger.debug(status);
+			move = switch (status) {
+				case WAITING_FOR_LICHESS -> waitForLichessMove();
+				case WAITING_FOR_BOT -> waitForPlayerMove();
+				default -> null;
+			};
+			try {
+				if (move != null) {
+					game.move(move);
+					lichessHttp.makeMove(gameId, move);
 				}
+			} catch (IllegalArgumentException ignore) {
+				Logger.error("could not perform move: " + move);
+				status = Status.WAITING_FOR_RECOVERY;
 			}
-			game.move(move);
 		} while (status.equals(Status.WAITING_FOR_BOT) || status.equals(Status.WAITING_FOR_LICHESS));
 	}
 
@@ -71,7 +69,7 @@ public class LichessBot {
 	}
 
 	private String waitForPlayerMove() {
-		var move = "h4f4";
+		final var move = "f4h4";
 		status = Status.WAITING_FOR_LICHESS;
 		receivedMoves++;
 		return move;

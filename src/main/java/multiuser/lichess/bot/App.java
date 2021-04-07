@@ -3,40 +3,34 @@
  */
 package multiuser.lichess.bot;
 
-import multiuser.lichess.bot.lichess_bot.LichessBot;
 import multiuser.lichess.bot.lichess_bot.LichessGameManager;
+import org.tinylog.Logger;
 
 public class App {
 
-	static Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
-		@Override
-		public void uncaughtException(Thread th, Throwable ex) {
-			System.out.println("Thread with id:" + th.getId() + " crashed due to Uncaught exception: " + ex);
-		}
-	};
+	private static final Thread.UncaughtExceptionHandler h = (th, ex) ->
+			Logger.error("Thread with id:" + th.getId() + " crashed due to Uncaught exception: " + ex);
 
 	/**
 	 * The delay that shall be waited after retrying an api request.
 	 */
-  public static void main(String[] args) throws InterruptedException {
-	  System.out.println("begin Startup");
+	public static void main(String[] args) throws InterruptedException {
+		Logger.info("begin Startup");
 
-	  LichessGameManager lichessGameManager = new LichessGameManager();
-	  LichessBot lichessBot = new LichessBot();
+		LichessGameManager lichessGameManager = new LichessGameManager();
 
-	  var lichessGameManagerThread = new Thread( () -> {
-	  	try {
-	  		lichessGameManager.setup();
-		  } catch (InterruptedException e) {
-			  System.out.println("Interrupted Thread: " + Thread.currentThread().getId());
-			  Thread.currentThread().interrupt();
-		  } catch (Exception e) {
-	  		throw new RuntimeException(e);
-		  }}
-	  );
+		var lichessGameManagerThread = new Thread(() -> {
+			try {
+				lichessGameManager.setup();
+			} catch (InterruptedException e) {
+				Logger.warn("Interrupted Thread: " + Thread.currentThread().getId());
+				Thread.currentThread().interrupt();
+			}
+		}
+		);
 
-	  lichessGameManagerThread.setUncaughtExceptionHandler(h);
-	  lichessGameManagerThread.start();
-	  lichessGameManagerThread.join();
-  }
+		lichessGameManagerThread.setUncaughtExceptionHandler(h);
+		lichessGameManagerThread.start();
+		lichessGameManagerThread.join();
+	}
 }

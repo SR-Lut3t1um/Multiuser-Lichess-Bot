@@ -44,6 +44,10 @@ dependencies {
 
     // This dependency is used to check if a chess move is legal.
     implementation("com.github.bhlangonijr:chesslib:1.3.0")
+
+    // Logging framework
+    implementation("org.tinylog:tinylog-api:2.2.1")
+    implementation("org.tinylog:tinylog-impl:2.2.1")
 }
 
 application {

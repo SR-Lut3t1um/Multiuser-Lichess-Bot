@@ -8,5 +8,8 @@ public enum Status {
 
 	// game running
 	WAITING_FOR_LICHESS,
-	WAITING_FOR_BOT
+	WAITING_FOR_BOT,
+
+	//
+	WAITING_FOR_RECOVERY
 }
