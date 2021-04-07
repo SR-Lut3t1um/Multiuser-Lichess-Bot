@@ -38,6 +38,7 @@ public class LichessHttp {
 				.header("Authorization", "Bearer " + LICHESS_API_TOKEN);
 	}
 
+	@SuppressWarnings("BusyWait")
 	private TreeNode createRequest(String path, String method, HttpRequest.BodyPublisher bodyPublisher) throws IOException, InterruptedException {
 		String body = null;
 		do {
@@ -89,7 +90,7 @@ public class LichessHttp {
 			client.sendAsync(request, HttpResponse.BodyHandlers.fromLineSubscriber(finder));
 			lastRequest = System.currentTimeMillis();
 			try {
-				String[] moves = new String[0];
+				String[] moves;
 				do {
 					finder.event.wait();
 					try (var jsonParser = jsonFactory.createParser(finder.event.string)) {
@@ -123,7 +124,9 @@ public class LichessHttp {
 
 	String[] getPlayedMoves(String gameId) throws IOException, InterruptedException {
 		var result = createGet("game/export/" + gameId);
-		List<String> moves = new LinkedList<>(
+
+		List<String> moves = new LinkedList<>();
+		if (result != null) moves.addAll(
 				Arrays.asList(
 						result
 								.get("moves")
@@ -132,6 +135,7 @@ public class LichessHttp {
 								.split(" ")
 				)
 		);
+
 
 		List<String> missingMoves = new LinkedList<>(Arrays.asList(
 				Objects.requireNonNull(waitForMoves(gameId, (short) moves.size())))
@@ -187,7 +191,7 @@ public class LichessHttp {
 
 		@Override
 		public void onComplete() {
-			// TODO: expose negative result
+			// this should never be reached
 		}
 
 		private static class StringContainer {
