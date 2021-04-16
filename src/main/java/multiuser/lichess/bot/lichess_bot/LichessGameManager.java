@@ -10,7 +10,6 @@ import org.tinylog.Logger;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Flow;
 
@@ -18,17 +17,15 @@ public class LichessGameManager {
 
 	private static final JsonFactory jsonFactory = new JsonFactory().setCodec(new ObjectMapper());
 	private final HashMap<String, Thread> games = new HashMap<>();
-	private final LichessHttp lichessHttp = new LichessHttp();
+	private final LichessHttp lichessHttp;
 
-	public void setup() throws InterruptedException {
+	public LichessGameManager(String lichessApiToken) {
+		lichessHttp = new LichessHttp(lichessApiToken);
+	}
+
+	public void setup() throws InterruptedException, ExecutionException {
 		Logger.info("Setting up Lichess Event listener");
-		try {
-			lichessHttp.createEventListener(new StringFinder()).get();
-		} catch (CompletionException | ExecutionException e) {
-			Logger.error(e.getMessage());
-			Logger.debug(e.getCause());
-			Thread.currentThread().interrupt();
-		}
+		lichessHttp.createEventListener(new StringFinder()).get().body();
 	}
 
 	public void clean() {
@@ -37,7 +34,7 @@ public class LichessGameManager {
 
 	private class StringFinder implements Flow.Subscriber<String> {
 
-		private final LichessBotEventHandler lichessBotEventHandler = new LichessBotEventHandlerImpl();
+		private final LichessBotEventHandler lichessBotEventHandler = new LichessBotEventHandlerImpl(lichessHttp);
 		private Flow.Subscription subscription;
 
 		@Override
@@ -67,19 +64,23 @@ public class LichessGameManager {
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
+				exit();
 			}
 		}
 
 		@Override
 		public void onError(Throwable throwable) {
-			Logger.error(throwable.getMessage());
-			Logger.debug(throwable.getCause());
+			//
 		}
 
 		@Override
 		public void onComplete() {
 			// nothing to be done here...
+		}
+
+		private void exit() {
+			for (var entry : games.entrySet()) entry.getValue().interrupt();
+			Thread.currentThread().interrupt();
 		}
 	}
 }

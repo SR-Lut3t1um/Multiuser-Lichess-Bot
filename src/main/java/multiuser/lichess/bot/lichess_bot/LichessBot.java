@@ -8,13 +8,16 @@ import java.net.http.HttpRequest;
 
 
 public class LichessBot {
-
 	private final Game game = new Game();
-	private final LichessHttp lichessHttp = new LichessHttp();
+	private final LichessHttp lichessHttp;
 	private String gameId;
 	private Status status = Status.WAITING_FOR_CREATION;
 	private short receivedMoves = (short) 0;
 	private boolean isBotToMove;
+
+	public LichessBot(LichessHttp lichessHttp) {
+		this.lichessHttp = lichessHttp;
+	}
 
 	public void createGame(String user) throws IOException, InterruptedException {
 		Logger.info("creating game ");
