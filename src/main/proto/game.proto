@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option java_package = "me.tobiasliese.lichess_bot_protocol";
+option java_outer_classname = "GameManagement";
+
+package multiuser_lichess;
+import "users.proto";
+
+service game {
+  rpc move (Move) returns (Status);
+  rpc moves (stream Move) returns (Status);
+}
+
+message Move {
+  string playerName = 1;
+  string move = 2;
+  string gameId = 3;
+}

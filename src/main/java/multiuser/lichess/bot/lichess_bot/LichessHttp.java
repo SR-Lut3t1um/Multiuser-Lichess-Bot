@@ -25,7 +25,7 @@ public class LichessHttp {
 
 	private static final int API_DELAY = 20000;
 	private static final URI LICHESS_URL = URI.create("https://lichess.org/");
-	private static final String LICHESS_API_TOKEN = "CRTHHCQYACU245j6";
+	private final String lichessApiToken;
 	private final JsonFactory jsonFactory = new JsonFactory().setCodec(new ObjectMapper());
 	private final HttpClient client = HttpClient.newBuilder()
 			.version(HttpClient.Version.HTTP_2)
@@ -33,9 +33,13 @@ public class LichessHttp {
 			.build();
 	private long lastRequest;
 
-	private static HttpRequest.Builder getRequestBuilder(String path) {
+	public LichessHttp(String lichessApiToken) {
+		this.lichessApiToken = lichessApiToken;
+	}
+
+	private HttpRequest.Builder getRequestBuilder(String path) {
 		return HttpRequest.newBuilder(LICHESS_URL.resolve(path))
-				.header("Authorization", "Bearer " + LICHESS_API_TOKEN);
+				.header("Authorization", "Bearer " + lichessApiToken);
 	}
 
 	@SuppressWarnings("BusyWait")

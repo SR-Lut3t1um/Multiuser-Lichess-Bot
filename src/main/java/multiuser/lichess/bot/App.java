@@ -3,34 +3,29 @@
  */
 package multiuser.lichess.bot;
 
-import multiuser.lichess.bot.lichess_bot.LichessGameManager;
+import io.grpc.ServerBuilder;
+import io.grpc.protobuf.services.ProtoReflectionService;
+import multiuser.lichess.bot.grpc_connector.endpoints.Admin;
 import org.tinylog.Logger;
 
-public class App {
+import java.io.IOException;
 
-	private static final Thread.UncaughtExceptionHandler h = (th, ex) ->
-			Logger.error("Thread with id:" + th.getId() + " crashed due to Uncaught exception: " + ex);
+public class App {
 
 	/**
 	 * The delay that shall be waited after retrying an api request.
 	 */
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException, IOException {
 		Logger.info("begin Startup");
+		var server = ServerBuilder
+				.forPort(8000)
+				.addService(new Admin())
+				.addService(ProtoReflectionService.newInstance())
+				.build();
+		server.start();
 
-		LichessGameManager lichessGameManager = new LichessGameManager();
-
-		var lichessGameManagerThread = new Thread(() -> {
-			try {
-				lichessGameManager.setup();
-			} catch (InterruptedException e) {
-				Logger.warn("Interrupted Thread: " + Thread.currentThread().getId());
-				Thread.currentThread().interrupt();
-			}
-		}
-		);
-
-		lichessGameManagerThread.setUncaughtExceptionHandler(h);
-		lichessGameManagerThread.start();
-		lichessGameManagerThread.join();
+		Logger.info("Server started, listening on " + server.getPort());
+		server.awaitTermination();
 	}
+
 }

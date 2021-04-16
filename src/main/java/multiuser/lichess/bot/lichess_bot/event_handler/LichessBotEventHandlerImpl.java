@@ -9,13 +9,17 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class LichessBotEventHandlerImpl implements LichessBotEventHandler {
-	private final LichessHttp lichessHttp = new LichessHttp();
+	private final LichessHttp lichessHttp;
+
+	public LichessBotEventHandlerImpl(LichessHttp lichessHttp) {
+		this.lichessHttp = lichessHttp;
+	}
 
 	@Override
 	public void gameStart(HashMap<String, Thread> games, String gameId) {
 		games.put(gameId, new Thread(
 				() -> {
-					LichessBot lichessBot = new LichessBot();
+					LichessBot lichessBot = new LichessBot(lichessHttp);
 					try {
 						lichessBot.playGame(gameId, true);
 					} catch (IOException | InterruptedException ignore) {

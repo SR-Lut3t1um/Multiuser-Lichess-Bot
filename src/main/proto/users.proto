@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option java_package = "me.tobiasliese.lichess_bot_protocol";
+option java_multiple_files = true;
+
+package multiuser_lichess;
+
+service Users {
+  rpc add (FullUser) returns (Status);
+  rpc remove (User) returns (Status);
+}
+
+/**
+Add a user that communicates with lichess using the given api token
+ */
+message FullUser {
+  string apiToken = 1;
+  uint64 userId = 2;
+}
+
+/**
+Removes the user, this will stop the bot from making any moves
+ */
+message User {
+  uint64 userId = 1;
+}
+
+/**
+Challenges the player with the api token of the user
+ */
+message Player {
+  uint64 userId = 1;
+  string player = 2;
+}
+
+message Status {
+  bool success = 1;
+}
