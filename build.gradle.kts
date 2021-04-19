@@ -53,7 +53,7 @@ dependencies {
     implementation("com.github.bhlangonijr:chesslib:1.3.0")
 
     // Logging framework
-    implementation("org.tinylog:tinylog-api:2.2.1")
+    implementation("org.tinylog:tinylog-api:2.3.0")
     implementation("org.tinylog:tinylog-impl:2.2.1")
 
     // grpc
