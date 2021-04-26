@@ -51,14 +51,14 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 
     // This dependency is used to work with json.
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.12.2")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.12.3")
 
     // This dependency is used to check if a chess move is legal.
     implementation("com.github.bhlangonijr:chesslib:1.3.0")
 
     // Logging framework
-    implementation("org.tinylog:tinylog-api:$tinyLogVersion")
-    implementation("org.tinylog:tinylog-impl:$tinyLogVersion")
+    implementation("org.tinylog:tinylog-api:2.3.0")
+    implementation("org.tinylog:tinylog-impl:2.3.0")
 
     // grpc
     implementation("com.google.protobuf:protobuf-java:$protobufVersion")
