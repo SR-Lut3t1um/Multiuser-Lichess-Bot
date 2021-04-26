@@ -18,8 +18,8 @@ public class Admin extends UsersGrpc.UsersImplBase {
 	@Override
 	public void add(FullUser request, StreamObserver<Status> responseObserver) {
 		var status = Status.newBuilder();
-		LichessGameManager gameManager = new LichessGameManager(request.getApiToken());
-		boolean result = false;
+		var gameManager = new LichessGameManager(request.getApiToken());
+		var result = false;
 		if (!users.containsKey(request.getUserId())) try {
 			var thread = new Thread(() -> {
 				try {
@@ -29,11 +29,12 @@ public class Admin extends UsersGrpc.UsersImplBase {
 				}
 			});
 			Thread.sleep(1000);
-			result = true;
-			users.put(request.getUserId(), thread);
+			result = thread.isAlive();
+			if (result) users.put(request.getUserId(), thread);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		}
 		responseObserver.onNext(status.setSuccess(result).build());
+		if (!result) responseObserver.onCompleted();
 	}
 }

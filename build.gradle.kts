@@ -39,6 +39,10 @@ repositories {
     maven(url = "https://jitpack.io")
 }
 
+var grpcVersion = "1.37.0"
+var protobufVersion = "3.15.8"
+var tinyLogVersion = "2.2.1"
+
 dependencies {
     // Use JUnit Jupiter API for testing.
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
@@ -53,15 +57,15 @@ dependencies {
     implementation("com.github.bhlangonijr:chesslib:1.3.0")
 
     // Logging framework
-    implementation("org.tinylog:tinylog-api:2.2.1")
-    implementation("org.tinylog:tinylog-impl:2.2.1")
+    implementation("org.tinylog:tinylog-api:$tinyLogVersion")
+    implementation("org.tinylog:tinylog-impl:$tinyLogVersion")
 
     // grpc
-    implementation("com.google.protobuf:protobuf-java:3.15.8")
-    implementation("io.grpc:grpc-stub:1.37.0")
-    implementation("io.grpc:grpc-netty:1.37.0")
-    implementation("io.grpc:grpc-protobuf:1.37.0")
-    implementation("io.grpc:grpc-services:1.37.0")
+    implementation("com.google.protobuf:protobuf-java:$protobufVersion")
+    implementation("io.grpc:grpc-stub:$grpcVersion")
+    implementation("io.grpc:grpc-netty:$grpcVersion")
+    implementation("io.grpc:grpc-protobuf:$grpcVersion")
+    implementation("io.grpc:grpc-services:$grpcVersion")
 
     // required for the @generated annotation
     implementation("javax.annotation:javax.annotation-api:1.3.2")
@@ -81,12 +85,12 @@ tasks.test {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.15.8"
+        artifact = "com.google.protobuf:protoc:$protobufVersion"
     }
 
     protobuf.protobuf.plugins {
         id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.37.0"
+            artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion"
         }
     }
 
