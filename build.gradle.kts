@@ -39,7 +39,7 @@ repositories {
     maven(url = "https://jitpack.io")
 }
 
-var grpcVersion = "1.37.0"
+var grpcVersion = "1.37.1"
 var protobufVersion = "3.15.8"
 var tinyLogVersion = "2.2.1"
 
