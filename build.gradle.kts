@@ -29,7 +29,7 @@ sonarqube {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(16))
+        languageVersion.set(JavaLanguageVersion.of(19))
     }
 }
 
@@ -39,26 +39,26 @@ repositories {
     maven(url = "https://jitpack.io")
 }
 
-var grpcVersion = "1.37.0"
-var protobufVersion = "3.15.8"
+var grpcVersion = "1.49.2"
+var protobufVersion = "3.21.6"
 var tinyLogVersion = "2.2.1"
 
 dependencies {
     // Use JUnit Jupiter API for testing.
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
 
     // Use JUnit Jupiter Engine for testing.
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 
     // This dependency is used to work with json.
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.12.3")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.4")
 
     // This dependency is used to check if a chess move is legal.
-    implementation("com.github.bhlangonijr:chesslib:1.3.0")
+    implementation("com.github.bhlangonijr:chesslib:1.3.3")
 
     // Logging framework
-    implementation("org.tinylog:tinylog-api:2.3.0")
-    implementation("org.tinylog:tinylog-impl:2.3.0")
+    implementation("org.tinylog:tinylog-api:2.5.0")
+    implementation("org.tinylog:tinylog-impl:2.5.0")
 
     // grpc
     implementation("com.google.protobuf:protobuf-java:$protobufVersion")
@@ -74,6 +74,7 @@ dependencies {
 application {
     // Define the main class for the application.
     mainClass.set("multiuser.lichess.bot.App")
+    applicationDefaultJvmArgs = listOf("--enable-preview")
 }
 
 tasks.test {
@@ -81,7 +82,9 @@ tasks.test {
     useJUnitPlatform()
 }
 
-
+tasks.compileJava {
+    options.compilerArgs.add("--enable-preview")
+}
 
 protobuf {
     protoc {
