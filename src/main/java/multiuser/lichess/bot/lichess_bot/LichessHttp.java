@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Flow;
+import java.util.stream.Collectors;
 
 import static java.net.http.HttpRequest.BodyPublishers.noBody;
 
@@ -60,7 +61,7 @@ public class LichessHttp {
 					HttpResponse.BodyHandlers.ofString()
 			).body();
 			lastRequest = System.currentTimeMillis();
-		} while (body.equals("Too many requests. öäpü-ß0Please retry in a moment."));
+		} while (body.equals("Too many requests. Please retry in a moment."));
 		TreeNode json;
 		try (var jsonParser = jsonFactory.createParser(body)) {
 			json = jsonParser.readValueAsTree();

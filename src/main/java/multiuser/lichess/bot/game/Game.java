@@ -38,7 +38,7 @@ public class Game {
 	 * This method takes an array of moves and removes every entry that is not a legal move
 	 * it then creates a map of all moves as keys and a list of the player(s) that voted for it as the value.
 	 *
-	 * @param moves the moves that shall be used
+	 * @param moves the moves that shall be filtered and sorted
 	 * @return a map with the move as a key and a list of every user that wanted to make the move.
 	 */
 	private Map<String, List<String>> filterInvalidMoves(Move[] moves) {
@@ -68,7 +68,6 @@ public class Game {
 		board.doMove(
 				board.legalMoves().stream().filter(m -> m.toString().equals(move)).findAny().orElseThrow(illegalMove)
 		);
-
 	}
 
 	public void move(Move[] moves) {

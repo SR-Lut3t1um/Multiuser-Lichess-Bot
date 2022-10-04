@@ -4,7 +4,7 @@ import io.grpc.stub.StreamObserver;
 import me.tobiasliese.lichess_bot_protocol.FullUser;
 import me.tobiasliese.lichess_bot_protocol.Status;
 import me.tobiasliese.lichess_bot_protocol.UsersGrpc;
-import multiuser.lichess.bot.lichess_bot.LichessGameManager;
+import multiuser.lichess.bot.lichess_bot.LichessUserManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,13 +18,14 @@ public class Admin extends UsersGrpc.UsersImplBase {
 	@Override
 	public void add(FullUser request, StreamObserver<Status> responseObserver) {
 		var status = Status.newBuilder();
-		var gameManager = new LichessGameManager(request.getApiToken());
+		var userManager = new LichessUserManager(request.getApiToken());
 		var result = false;
 		if (!users.containsKey(request.getUserId())) try {
-			var thread = new Thread(() -> {
+			var thread = Thread.startVirtualThread(() -> {
 				try {
-					gameManager.setup();
+					userManager.setup();
 				} catch (InterruptedException | ExecutionException e) {
+					e.printStackTrace();
 					Thread.currentThread().interrupt();
 				}
 			});
@@ -35,6 +36,6 @@ public class Admin extends UsersGrpc.UsersImplBase {
 			Thread.currentThread().interrupt();
 		}
 		responseObserver.onNext(status.setSuccess(result).build());
-		if (!result) responseObserver.onCompleted();
+		responseObserver.onCompleted(); // todo check if it might be useful to keep the connection alive
 	}
 }

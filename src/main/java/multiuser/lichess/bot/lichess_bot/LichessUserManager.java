@@ -13,13 +13,13 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Flow;
 
-public class LichessGameManager {
+public class LichessUserManager {
 
 	private static final JsonFactory jsonFactory = new JsonFactory().setCodec(new ObjectMapper());
 	private final HashMap<String, Thread> games = new HashMap<>();
 	private final LichessHttp lichessHttp;
 
-	public LichessGameManager(String lichessApiToken) {
+	public LichessUserManager(String lichessApiToken) {
 		lichessHttp = new LichessHttp(lichessApiToken);
 	}
 
@@ -45,6 +45,7 @@ public class LichessGameManager {
 
 		@Override
 		public void onNext(String line) {
+			System.out.println(line);
 			subscription.request(1);
 			if (line.isBlank()) return;
 			try (var parser = jsonFactory.createParser(line)) {
