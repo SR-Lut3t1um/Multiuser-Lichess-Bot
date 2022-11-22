@@ -51,7 +51,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 
     // This dependency is used to work with json.
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.4")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.14.1")
 
     // This dependency is used to check if a chess move is legal.
     implementation("com.github.bhlangonijr:chesslib:1.3.3")
