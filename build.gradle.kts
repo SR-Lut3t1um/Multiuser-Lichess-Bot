@@ -58,7 +58,7 @@ dependencies {
 
     // Logging framework
     implementation("org.tinylog:tinylog-api:2.5.0")
-    implementation("org.tinylog:tinylog-impl:2.5.0")
+    implementation("org.tinylog:tinylog-impl:2.6.0")
 
     // grpc
     implementation("com.google.protobuf:protobuf-java:$protobufVersion")
