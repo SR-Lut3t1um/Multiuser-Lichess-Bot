@@ -40,7 +40,7 @@ repositories {
 }
 
 var grpcVersion = "1.50.0"
-var protobufVersion = "3.21.7"
+var protobufVersion = "4.27.2"
 var tinyLogVersion = "2.2.1"
 
 dependencies {
