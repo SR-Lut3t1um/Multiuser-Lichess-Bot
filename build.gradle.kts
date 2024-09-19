@@ -54,7 +54,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.4")
 
     // This dependency is used to check if a chess move is legal.
-    implementation("com.github.bhlangonijr:chesslib:1.3.3")
+    implementation("com.github.bhlangonijr:chesslib:1.3.4")
 
     // Logging framework
     implementation("org.tinylog:tinylog-api:2.5.0")
